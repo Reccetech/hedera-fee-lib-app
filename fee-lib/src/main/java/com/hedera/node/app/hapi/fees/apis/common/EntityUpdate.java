@@ -21,6 +21,11 @@ public class EntityUpdate extends AbstractFeeModel {
     private final List<ParameterDefinition> params = List.of(
             new ParameterDefinition("numKeys", "number", null,MIN_KEYS, MIN_KEYS, MAX_KEYS, "Number of keys")
     );
+    private final List<ParameterDefinition> hookParams = List.of(
+            new ParameterDefinition("numHooksCreated", "number", null, 0, 0, 100, "Number of hooks created"),
+            new ParameterDefinition("numHooksUpdated", "number", null, 0, 0, 100, "Number of hooks updated/replaced"),
+            new ParameterDefinition("numHooksDeleted", "number", null, 0, 0, 100, "Number of hooks deleted")
+    );
 
     public EntityUpdate(String service, String api, String description, int numFreeKeys) {
         this.service = service;
@@ -39,7 +44,12 @@ public class EntityUpdate extends AbstractFeeModel {
 
     @Override
     protected List<ParameterDefinition> apiSpecificParams() {
-        return params;
+        List<ParameterDefinition> result = new java.util.ArrayList<>(params);
+        // Add hook parameters for CryptoUpdate
+        if ("CryptoUpdate".equals(api)) {
+            result.addAll(hookParams);
+        }
+        return result;
     }
 
     @Override
@@ -52,7 +62,28 @@ public class EntityUpdate extends AbstractFeeModel {
         if (numKeys > numFreeKeys) {
             fee.addDetail("Additional keys", numKeys - numFreeKeys, (numKeys - numFreeKeys) * BaseFeeRegistry.getBaseFee("PerKey"));
         }
+        
+        // Add hook operation fees for CryptoUpdate
+        if ("CryptoUpdate".equals(api)) {
+            int numHooksCreated = getInt(values.get("numHooksCreated"));
+            int numHooksUpdated = getInt(values.get("numHooksUpdated"));
+            int numHooksDeleted = getInt(values.get("numHooksDeleted"));
+            
+            if (numHooksCreated > 0) {
+                fee.addDetail("Hook creation", numHooksCreated, numHooksCreated * BaseFeeRegistry.getBaseFee("HookCreate"));
+            }
+            if (numHooksUpdated > 0) {
+                fee.addDetail("Hook update", numHooksUpdated, numHooksUpdated * BaseFeeRegistry.getBaseFee("HookUpdate"));
+            }
+            if (numHooksDeleted > 0) {
+                fee.addDetail("Hook deletion", numHooksDeleted, numHooksDeleted * BaseFeeRegistry.getBaseFee("HookDelete"));
+            }
+        }
 
         return fee;
+    }
+    
+    private int getInt(Object value) {
+        return (value instanceof Integer) ? (Integer) value : 0;
     }
 }

@@ -10,6 +10,7 @@ import com.hedera.node.app.hapi.fees.apis.contract.ContractCreate;
 import com.hedera.node.app.hapi.fees.apis.crypto.CryptoAllowance;
 import com.hedera.node.app.hapi.fees.apis.crypto.CryptoTransfer;
 import com.hedera.node.app.hapi.fees.apis.file.FileOperations;
+import com.hedera.node.app.hapi.fees.apis.hooks.LambdaSStore;
 import com.hedera.node.app.hapi.fees.apis.token.*;
 
 import java.util.LinkedHashMap;
@@ -33,6 +34,7 @@ public class FeeModelRegistry {
         registry.put("CryptoGetStakers", new NoParametersAPI("Crypto", "CryptoGetStakers", "Retrieves the list of proxy stakers for a node"));
         registry.put("CryptoApproveAllowance", new CryptoAllowance( "CryptoApproveAllowance", "Allows a third-party to transfer on behalf of a delegating account (HIP-336)"));
         registry.put("CryptoDeleteAllowance", new CryptoAllowance("CryptoDeleteAllowance", "Deletes non-fungible approved allowances from an owner's account"));
+        registry.put("LambdaSStore", new LambdaSStore("Crypto", "LambdaSStore", "Updates hook storage (key/value EVM-compatible storage)"));
 
         // HCS
         registry.put("ConsensusCreateTopic", new EntityCreate("Consensus", "ConsensusCreateTopic", "Create a new topic", FREE_KEYS_DEFAULT, true));

@@ -7,8 +7,6 @@ import com.hedera.node.app.hapi.fees.ParameterDefinition;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.hedera.node.app.hapi.fees.apis.common.FeeConstants.MAX_KEYS;
 import static com.hedera.node.app.hapi.fees.apis.common.FeeConstants.MIN_KEYS;
@@ -25,6 +23,9 @@ public class EntityCreate extends AbstractFeeModel {
     );
     private final List<ParameterDefinition> customFeeParams = List.of(
             new ParameterDefinition("hasCustomFee", "list", new Object[] {YesOrNo.YES, YesOrNo.NO}, YesOrNo.NO, 0, 0, "Enable custom fee?")
+    );
+    private final List<ParameterDefinition> hookParams = List.of(
+            new ParameterDefinition("numHooksCreated", "number", null, 0, 0, 100, "Number of hooks created")
     );
 
     public EntityCreate(String service, String api, String description, int numFreeKeys, boolean customFeeCapable) {
@@ -47,10 +48,15 @@ public class EntityCreate extends AbstractFeeModel {
 
     @Override
     protected List<ParameterDefinition> apiSpecificParams() {
+        List<ParameterDefinition> result = new java.util.ArrayList<>(params);
         if (customFeeCapable) {
-            return Stream.concat(params.stream(), customFeeParams.stream()).collect(Collectors.toList());
+            result.addAll(customFeeParams);
         }
-        return params;
+        // Add hook parameters for CryptoCreate
+        if ("CryptoCreate".equals(api)) {
+            result.addAll(hookParams);
+        }
+        return result;
     }
 
     @Override
@@ -69,7 +75,20 @@ public class EntityCreate extends AbstractFeeModel {
         if (numKeys > numFreeKeys) {
             fee.addDetail("Additional keys", numKeys - numFreeKeys, (numKeys - numFreeKeys) * BaseFeeRegistry.getBaseFee("PerKey"));
         }
+        
+        // Add hook creation fees for CryptoCreate
+        if ("CryptoCreate".equals(api) && values.containsKey("numHooksCreated")) {
+            int numHooksCreated = getInt(values.get("numHooksCreated"));
+            if (numHooksCreated > 0) {
+                fee.addDetail("Hook creation", numHooksCreated, numHooksCreated * BaseFeeRegistry.getBaseFee("HookCreate"));
+            }
+        }
+        
         return fee;
+    }
+    
+    private int getInt(Object value) {
+        return (value instanceof Integer) ? (Integer) value : 0;
     }
 }
 

@@ -18,7 +18,9 @@ public class CryptoTransfer extends AbstractFeeModel {
             new ParameterDefinition("numFTWithCustomFeeEntries", "number", null, 0, 0, 10, "Fungible token entries with custom fee"),
             new ParameterDefinition("numNFTWithCustomFeeEntries", "number", null, 0, 0, 10, "NFT entries with custom fee"),
             new ParameterDefinition("numAutoAssociationsCreated", "number", null, 0, 0, 10, "Auto-created token associations"),
-            new ParameterDefinition("numAutoAccountsCreated", "number", null, 0, 0, 20, "Auto-created accounts")
+            new ParameterDefinition("numAutoAccountsCreated", "number", null, 0, 0, 20, "Auto-created accounts"),
+            new ParameterDefinition("numHooksInvoked", "number", null, 0, 0, 100, "Number of hooks invoked"),
+            new ParameterDefinition("gasConsumed", "number", null, 0, 0, 15000000, "Gas consumed by hook execution")
     );
 
     public CryptoTransfer(String service, String api) {
@@ -133,6 +135,20 @@ public class CryptoTransfer extends AbstractFeeModel {
             fee.addDetail("Auto token associations", num, num * BaseFeeRegistry.getBaseFee("TokenAssociateToAccount"));
         if (values.get("numAutoAccountsCreated") instanceof Integer num && num > 0)
             fee.addDetail("Auto account creations", num, num * BaseFeeRegistry.getBaseFee("CryptoCreate"));
+
+        // Add hook invocation fees for CryptoTransfer
+        if ("CryptoTransfer".equals(api) || "TokenTransfer".equals(api) || "TokenAirdrop".equals(api)) {
+            int numHooksInvoked = getInt(values.get("numHooksInvoked"));
+            int gasConsumed = getInt(values.get("gasConsumed"));
+            
+            if (numHooksInvoked > 0) {
+                fee.addDetail("Hook invocation", numHooksInvoked, numHooksInvoked * BaseFeeRegistry.getBaseFee("HookInvoke"));
+            }
+            if (gasConsumed > 0) {
+                double gasFee = gasConsumed * BaseFeeRegistry.getBaseFee("PerGas");
+                fee.addDetail("Hook gas consumed", gasConsumed, gasFee);
+            }
+        }
 
         return fee;
     }

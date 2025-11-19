@@ -16,6 +16,13 @@ public final class BaseFeeRegistry {
         fees.put("PerFileByte", 0.000011);
         fees.put("PerCryptoTransferAccount", 0.00001);
         fees.put("PerGas", 0.0000000852);
+        
+        // Hiero Hooks
+        fees.put("HookCreate", 1.0);
+        fees.put("HookUpdate", 1.0);
+        fees.put("HookDelete", 1.0);
+        fees.put("HookInvoke", 0.005);
+        fees.put("PerLambdaSStoreSlot", 0.0001);
 
         // Crypto service
         fees.put("CryptoCreate", 0.05000);
